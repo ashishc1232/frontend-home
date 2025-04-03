@@ -2,11 +2,12 @@
 import { useState } from "react";
 import Navbar from "./Navbar";
 import { categories, subcategories } from "./categories";
+import { useRouter } from "next/navigation";
 
 export default function ProductForm() {
   // Remove temporary sellerId since backend will derive it from the auth token
   // const sellerId = "SELLER_ID_FROM_AUTH";
-
+  const router = useRouter();
   const [product, setProduct] = useState({
     name: "",
     description: "",
@@ -31,6 +32,9 @@ export default function ProductForm() {
   ) => {
     setProduct({ ...product, [e.target.name]: e.target.value });
   };
+  const handleBack = () => {
+    router.push("/categories") // Back to the main categories page
+  }
 
   // Handle file input change
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,6 +92,19 @@ export default function ProductForm() {
     <div>
       <Navbar />
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-yellow-100 to-white pt-16 pb-16">
+         {/* Back to Category Button */}
+         <div>
+         <div className="absolute pt-16 top-4 left-14">
+          <button
+            onClick={handleBack}
+            className="px-6 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-all duration-300"
+          >
+            ⬅ Back to Categories
+          </button>
+        </div>
+         </div>
+         
+
         <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-lg">
           <h2 className="text-2xl font-bold text-yellow-800 text-center mb-6">
             Add Your Product
@@ -160,7 +177,7 @@ export default function ProductForm() {
             >
               <option value="">Select Category</option>
               {categories.map((category) => (
-                <option key={category.name} value={category.name}>
+                <option key={category.id} value={category.id}>
                   {category.name}
                 </option>
               ))}
@@ -236,6 +253,7 @@ export default function ProductForm() {
               Submit Product
             </button>
           </form>
+          
         </div>
       </div>
     </div>

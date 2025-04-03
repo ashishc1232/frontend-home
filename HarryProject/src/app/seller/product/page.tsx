@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Pencil, Trash } from "lucide-react";
-
+import { useRouter } from "next/navigation"; // ✅ Fixed Import
 // Product interface for TypeScript
 interface Product {
   _id: string;
@@ -16,15 +16,18 @@ interface Product {
 }
 
 export default function ProductManagement() {
+  const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
-
+  const [message, setMessage] = useState<string>(""); // State for success message
   // Fetch products for the current seller using the new endpoint
   useEffect(() => {
     fetchProducts();
   }, []);
-
+  const handleBack = () => {
+    router.push("/categories") // Back to the main categories page
+  }
   const fetchProducts = async () => {
     try {
       const res = await fetch("http://localhost:5000/api/products/mine", {
@@ -39,19 +42,31 @@ export default function ProductManagement() {
     }
   };
 
-  // Delete Product
   const deleteProduct = async (id: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/products/${id}`, {
+      const res = await fetch(`http://localhost:5000/api/products/mine/${id}`, {
         method: "DELETE",
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to delete product");
+  
+      // Remove the deleted product from state
       setProducts(products.filter(product => product._id !== id));
+
+      // Set success message
+      setMessage("Product deleted successfully!");
+
+      // Clear message after 3 seconds
+      setTimeout(() => {
+        setMessage("");
+      }, 3000);
+ 
+      
     } catch (error) {
       console.error("Error deleting product:", error);
     }
   };
+  
 
   // Filter products based on search and category
   const filteredProducts = products.filter(product =>
@@ -60,11 +75,23 @@ export default function ProductManagement() {
   );
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6  items-center justify-center bg-gradient-to-br from-yellow-100 to-white pt-16 pb-16">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold">Product Management</h1>
-        <Button className="bg-black text-white px-4 py-2 rounded-md">+ Add New Product</Button>
+        <button
+            onClick={handleBack}
+            className="px-6 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
+          >
+            Back to Categories
+          </button>
       </div>
+
+      {/* Success Message Display */}
+      {message && (
+        <div className="text-center w-full bg-yellow-500 text-white py-2 rounded-md mb-4">
+          {message}
+        </div>
+      )}
 
       <div className="grid grid-cols-4 gap-4 bg-white p-6 shadow-md rounded-lg mb-6">
         <StatCard title="Total Products" value={products.length} />
@@ -114,7 +141,8 @@ export default function ProductManagement() {
                 <td className="p-3">{product.stock}</td>
                 <td className="p-3">{product.sold}</td>
                 <td className="p-3 flex gap-2">
-                  <Button className="bg-gray-200 text-gray-800 px-2 py-1">
+                  <Button className="bg-gray-200 text-gray-800 px-2 py-1"
+                   onClick={() => router.push(`/seller/edit-product/${product._id}`)}>
                     <Pencil size={16} />
                   </Button>
                   <Button onClick={() => deleteProduct(product._id)} className="bg-red-500 text-white px-2 py-1">

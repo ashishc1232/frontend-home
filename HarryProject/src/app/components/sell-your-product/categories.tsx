@@ -17,7 +17,7 @@ export const categories = [
   { id: "Kids", name: "Kids Special", image: "/homepage/babycloth.jpg", hasSubcategories: true },
   { id: "Gifts", name: "Gifts and Festive", image: "/homepage/gift2.jpg", hasSubcategories: true },
   { id: "Musical", name: "Musical Instruments", image: "/homepage/instrument.jpg", hasSubcategories: true },
-  { id: "Handmade", name: "Handmade Footwear", image: "/homepage/footware.jpg", hasSubcategories: true },
+  { id: "Handmade", name: "Handmade Footwear", image: "/homepage/footware.jpg", hasSubcategories: true }
 ]
 
 export const subcategories: Record<string, string[]> = {
@@ -30,5 +30,5 @@ export const subcategories: Record<string, string[]> = {
   Kids: ["Baby Clothes","Soft and Wooden Toys","Personalized Accessories"],
   Gifts: ["Gift Hampers","Greeting Cards","Wedding and Festival Decor"],
   Musical: ["Small Tabla", "Flute"],
-  Handmade: ["Kolhapuri Chappal", "Jute Sandals"],
+  Handmade: ["Kolhapuri Chappal", "Jute Sandals"]
 }

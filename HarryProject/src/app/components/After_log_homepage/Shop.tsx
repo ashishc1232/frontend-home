@@ -81,7 +81,7 @@ export default function Shop() {
                       {subcategories[category.id]?.map((sub) => (
                         <Link
                           key={sub}
-                          href={`/shop/${encodeURIComponent(category.name.toLowerCase())}/${encodeURIComponent(sub.toLowerCase().replace(/\s+/g, "-"))}`}
+                          href={`/shop/${encodeURIComponent(category.id.toLowerCase())}/${encodeURIComponent(sub.toLowerCase().replace(/\s+/g, "-"))}`}
                           className="block px-6 py-2 hover:bg-primary hover:text-white transition-colors text-sm border-t border-gray-100 first:border-t-0"
                         >
                           {sub}
