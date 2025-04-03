@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Poppins } from "next/font/google";
 
 import "./globals.css"
-import type React from "react" // Import React
+import type React from "react" 
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/context/auth-context";
 import { SellerAuthProvider } from "@/context/authContextSeller";
+import {  CartProvider } from "@/context/cartContext";
+
 
 
 const geistSans = Geist({
@@ -39,7 +41,9 @@ export default function RootLayout({
       > <Toaster position="top-right" richColors />
       <AuthProvider>
         <SellerAuthProvider>
+          <CartProvider>
       {children}
+      </CartProvider>
       </SellerAuthProvider>
       </AuthProvider>
       </body>
