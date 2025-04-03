@@ -114,3 +114,66 @@ export const getProductsBySeller = async (req, res) => {
         res.status(500).json({ message: "Error fetching seller products", error });
     }
 };
+
+export const deleteProduct = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const sellerId = req.seller._id; // Get seller ID from authentication middleware
+
+    // Find and delete the product only if it belongs to the authenticated seller
+    const product = await Product.findOneAndDelete({ _id: productId, sellerId });
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found or unauthorized" });
+    }
+
+    res.json({ message: "Product deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting product", error });
+  }
+};
+
+export const updateProduct = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const sellerId = req.seller._id; // Get seller ID from authentication middleware
+
+    let product = await Product.findOne({ _id: productId, sellerId });
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found or unauthorized" });
+    }
+
+    // Extract updated fields from request body
+    const {
+      name, description, price, discountPrice, stock, unit, deliveryTime,
+      category, subcategory, returnPolicy, paymentMode, contact, location
+    } = req.body;
+
+    // Update product fields if they are provided
+    product.name = name || product.name;
+    product.description = description || product.description;
+    product.price = price || product.price;
+    product.discountPrice = discountPrice || product.discountPrice;
+    product.stock = stock || product.stock;
+    product.unit = unit || product.unit;
+    product.deliveryTime = deliveryTime || product.deliveryTime;
+    product.category = category || product.category;
+    product.subcategory = subcategory || product.subcategory;
+    product.returnPolicy = returnPolicy || product.returnPolicy;
+    product.paymentMode = paymentMode || product.paymentMode;
+    product.contact = contact || product.contact;
+    product.location = location || product.location;
+
+    // If new images are uploaded, update the image paths
+    if (req.files && req.files.length > 0) {
+      product.images = req.files.map(file => "/" + file.path.replace(/\\/g, "/"));
+    }
+
+    await product.save();
+    res.json({ message: "Product updated successfully!", product });
+
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error });
+  }
+};
