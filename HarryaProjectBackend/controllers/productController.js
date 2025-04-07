@@ -26,11 +26,25 @@ export const addProduct = async (req, res) => {
       return res.status(401).json({ message: "Not authenticated" });
     }
 
+    // Set both sellerId and seller fields (if you want to keep both)
     const newProduct = new Product({
-      sellerId, // save seller id along with product data
-      name, description, price, discountPrice, stock, unit, deliveryTime,
-      category, subcategory, returnPolicy, paymentMode, sellerName,
-      contact, location, images
+      sellerId,      // For Seller model reference
+      seller: sellerId,  // For User model reference (or you can remove this field if not needed)
+      name,
+      description,
+      price,
+      discountPrice,
+      stock,
+      unit,
+      deliveryTime,
+      category,
+      subcategory,
+      returnPolicy,
+      paymentMode,
+      sellerName,
+      contact,
+      location,
+      images
     });
 
     await newProduct.save();
@@ -40,6 +54,7 @@ export const addProduct = async (req, res) => {
     res.status(500).json({ message: "Server error", error });
   }
 };
+
 
 export const getMyProducts = async (req, res) => {
   try {

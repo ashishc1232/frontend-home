@@ -67,7 +67,7 @@ export const loginSeller = async (req, res) => {
 
     const token = jwt.sign({ id: seller._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
     
-    res.cookie("token", token, {
+    res.cookie("seller_token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
@@ -81,7 +81,8 @@ export const loginSeller = async (req, res) => {
 
 export const checkAuth = async (req, res) => {
   try {
-    const token = req.cookies.token;
+    const token = req.cookies.seller_token;
+
     if (!token) return res.status(401).json({ message: "Not authenticated" });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);

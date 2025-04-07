@@ -41,9 +41,9 @@ export default function RootLayout({
       > <Toaster position="top-right" richColors />
       <AuthProvider>
         <SellerAuthProvider>
-          
+          <CartProvider>
       {children}
-      
+      </CartProvider>
       </SellerAuthProvider>
       </AuthProvider>
       </body>

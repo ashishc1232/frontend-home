@@ -1,73 +1,77 @@
-"use client"
+// app/shop/[category]/[subcategory]/[productId]/page.tsx
+"use client";
 
-import { useEffect, useState } from "react"
-import { useParams } from "next/navigation"
-import Image from "next/image"
-import Link from "next/link"
-import { ShoppingCart, Heart, Truck, RotateCcw, CreditCard, MapPin } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
+import { ShoppingCart, Heart, Truck, RotateCcw, CreditCard, MapPin } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { AuthProvider } from "@/context/auth-context";
 
 interface Product {
-  _id: string
-  name: string
-  description: string
-  price: number
-  discountPrice?: number
-  stock: number
-  unit: string
-  deliveryTime: string
-  category: string
-  subcategory: string
-  returnPolicy: string
-  paymentMode: string
-  sellerName: string
-  contact: string
-  location: string
-  images: string[]
+  _id: string;
+  name: string;
+  description: string;
+  price: number;
+  discountPrice?: number;
+  stock: number;
+  unit: string;
+  deliveryTime: string;
+  category: string;
+  subcategory: string;
+  returnPolicy: string;
+  paymentMode: string;
+  sellerName: string;
+  contact: string;
+  location: string;
+  images: string[];
 }
 
 export default function ProductDetailPage() {
-  const params = useParams()
-  const productId = params.productId as string
-  const [product, setProduct] = useState<Product | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState("")
-  const [selectedImage, setSelectedImage] = useState<string | null>(null)
-  const [quantity, setQuantity] = useState(1)
+  const params = useParams();
+  const productId = params.productId as string;
+  const router = useRouter();
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [quantity, setQuantity] = useState(1);
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     async function fetchProduct() {
       try {
-        const res = await fetch(`http://localhost:5000/api/products/${productId}`)
+        const res = await fetch(`http://localhost:5000/api/products/${productId}`);
         if (!res.ok) {
-          throw new Error("Failed to fetch product details")
+          throw new Error("Failed to fetch product details");
         }
-        const data = await res.json()
-        setProduct(data.product)
+        const data = await res.json();
+        setProduct(data.product);
 
         // Set the first image as the selected image by default
         if (data.product.images && data.product.images.length > 0) {
-          setSelectedImage(`http://localhost:5000${data.product.images[0]}`)
+          setSelectedImage(`http://localhost:5000${data.product.images[0]}`);
         }
       } catch (err: any) {
-        setError(err.message || "Something went wrong")
+        setError(err.message || "Something went wrong");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
     if (productId) {
-      fetchProduct()
+      fetchProduct();
     }
-  }, [productId])
+  }, [productId]);
 
   const handleQuantityChange = (change: number) => {
-    const newQuantity = quantity + change
+    const newQuantity = quantity + change;
     if (newQuantity >= 1 && newQuantity <= (product?.stock || 1)) {
-      setQuantity(newQuantity)
+      setQuantity(newQuantity);
     }
-  }
+  };
 
   const calculateDiscount = () => {
     if (product?.discountPrice && product.price) {
@@ -77,37 +81,57 @@ export default function ProductDetailPage() {
     return 0;
   };
 
+  // Add to Cart API call
+  const handleAddToCart = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/cart/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // send cookies
+        body: JSON.stringify({ productId: product?._id, quantity }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage("Product added successfully!");
+        // Optionally, redirect to the cart page after a short delay
+        setTimeout(() => {
+          router.push("/cart");
+        }, 1500);
+      } else {
+        setMessage(data.message || "Failed to add product");
+      }
+    } catch (error: any) {
+      setMessage(error.message || "Server error");
+    }
+  };
 
   if (loading)
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="w-12 h-12 border-4 border-gray-300 border-t-primary rounded-full animate-spin"></div>
       </div>
-    )
-  if (error) return <p className="text-center text-red-500">Error: {error}</p>
-  if (!product) return <p className="text-center">No product found.</p>
+    );
+  if (error) return <p className="text-center text-red-500">Error: {error}</p>;
+  if (!product) return <p className="text-center">No product found.</p>;
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
+    <AuthProvider>
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
       {/* Breadcrumb */}
       <div className="mb-6">
         <nav className="flex text-sm">
           <Link href="/shop" className="text-muted-foreground hover:text-primary">
             Shop
           </Link>
-          <span className="mx-2 text-muted-foreground"></span>
-          {/* <Link href={`/shop/${product.category}`} className="text-muted-foreground hover:text-primary">
-            {product.category}
-          </Link> */}
-          {/* <span className="mx-2 text-muted-foreground">/</span>
-          <Link
-            href={`/shop/${product.category}/${product.subcategory}`}
-            className="text-muted-foreground hover:text-primary"
-          >
-            {product.subcategory}
-          </Link> */}
+          <span className="mx-2 text-muted-foreground">/</span>
         </nav>
       </div>
+
+      {message && (
+        <div className="mb-4 p-2 bg-green-100 text-green-800 text-center rounded">
+          {message}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
         {/* Product Images Section */}
@@ -128,7 +152,7 @@ export default function ProductDetailPage() {
           {/* Thumbnails */}
           <div className="flex space-x-2 overflow-x-auto pb-2">
             {product.images.map((img, index) => {
-              const fullImageUrl = `http://localhost:5000${img}`
+              const fullImageUrl = `http://localhost:5000${img}`;
               return (
                 <div
                   key={index}
@@ -143,7 +167,7 @@ export default function ProductDetailPage() {
                     className="object-cover rounded-sm"
                   />
                 </div>
-              )
+              );
             })}
           </div>
         </div>
@@ -173,9 +197,7 @@ export default function ProductDetailPage() {
                   </Badge>
                 </>
               )}
-
             </div>
-
             <p className="text-sm text-muted-foreground">
               {product.stock > 10 ? (
                 <span className="text-green-600 font-medium">In Stock</span>
@@ -206,7 +228,9 @@ export default function ProductDetailPage() {
               >
                 -
               </Button>
-              <div className="h-8 px-4 flex items-center justify-center border-y border-input">{quantity}</div>
+              <div className="h-8 px-4 flex items-center justify-center border-y border-input">
+                {quantity}
+              </div>
               <Button
                 variant="outline"
                 size="icon"
@@ -224,11 +248,18 @@ export default function ProductDetailPage() {
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3">
-            <Button className="flex-1" variant="outline">
+            <Button className="flex-1" variant="outline" onClick={handleAddToCart}>
               <ShoppingCart className="mr-2 h-4 w-4" />
               Add to Cart
             </Button>
-            <Button className="flex-1">Buy Now</Button>
+           
+            <Button
+              className="flex-1"
+              onClick={() => router.push(`/checkout?productId=${product._id}&quantity=${quantity}`)}
+            >
+              Buy Now
+            </Button>
+
             <Button variant="ghost" size="icon" className="hidden sm:flex">
               <Heart className="h-5 w-5" />
             </Button>
@@ -236,7 +267,7 @@ export default function ProductDetailPage() {
 
           <Separator />
 
-          {/* Product Details */}
+          {/* Additional Product Details */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex items-start space-x-2">
               <Truck className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
@@ -279,8 +310,6 @@ export default function ProductDetailPage() {
         </div>
       </div>
     </div>
-  )
+    </AuthProvider>
+  );
 }
-
-
-

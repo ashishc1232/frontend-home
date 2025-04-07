@@ -1,151 +1,152 @@
 "use client";
 
-import { useContext, useEffect, useState } from "react";
-import { CartContext } from "../../context/cartContext";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import Link from "next/link";
-import { Trash2, Plus, Minus } from "lucide-react";
 
-interface Product {
-  _id: string;
-  name: string;
-  price: number;
-  discountPrice?: number;
-  images: string[];
+interface CartItem {
+  product: {
+    _id: string;
+    name: string;
+    price: number;
+    discountPrice?: number;
+    images: string[];
+  };
+  quantity: number;
 }
 
-const CartPage = () => {
-  const { cartItems, removeFromCart, updateCartItem } = useContext(CartContext);
-  const [products, setProducts] = useState<Record<string, Product>>({});
+interface Cart {
+  items: CartItem[];
+}
+
+export default function CartPage() {
+  const [cart, setCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState("");
 
-  // Fetch product details for each cart item
-  useEffect(() => {
-    async function fetchProducts() {
-      const newProducts: Record<string, Product> = {};
-      for (const item of cartItems) {
-        const res = await fetch(`http://localhost:5000/api/products/${item.productId}`);
-        if (res.ok) {
-          const data = await res.json();
-          newProducts[item.productId] = data.product;
-        }
-      }
-      setProducts(newProducts);
-      setLoading(false);
-    }
-    if (cartItems.length > 0) {
-      fetchProducts();
-    } else {
-      setLoading(false);
-    }
-  }, [cartItems]);
+  // Function to decide which price to use (discountPrice if available)
+  const getUnitPrice = (item: CartItem) => {
+    return item.product.discountPrice || item.product.price;
+  };
 
-  const handleQuantityChange = (productId: string, change: number) => {
-    const item = cartItems.find((item) => item.productId === productId);
-    if (item) {
-      const newQuantity = item.quantity + change;
-      updateCartItem(productId, newQuantity);
+  // Calculate the grand total amount
+  const calculateGrandTotal = () => {
+    if (!cart) return 0;
+    return cart.items.reduce((total, item) => {
+      return total + getUnitPrice(item) * item.quantity;
+    }, 0);
+  };
+
+  const fetchCart = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/cart", {
+        credentials: "include",
+      });
+      const data = await res.json();
+      setCart(data.cart);
+    } catch (error) {
+      console.error("Error fetching cart:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (loading) {
+  const updateQuantity = async (productId: string, newQuantity: number) => {
+    try {
+      const res = await fetch("http://localhost:5000/api/cart/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ productId, quantity: newQuantity }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage("Cart updated successfully!");
+        fetchCart();
+      } else {
+        setMessage(data.message || "Failed to update cart");
+      }
+    } catch (error: any) {
+      setMessage(error.message || "Server error");
+    }
+  };
+
+  useEffect(() => {
+    fetchCart();
+  }, []);
+
+  if (loading)
     return (
       <div className="flex justify-center items-center h-screen">
-        <div>Loading...</div>
+        <div className="w-12 h-12 border-4 border-gray-300 border-t-primary rounded-full animate-spin"></div>
       </div>
     );
-  }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-5xl">
-      <h1 className="text-3xl font-bold mb-6">Your Cart</h1>
-      {cartItems.length === 0 ? (
-        <p>
-          Your cart is empty.{" "}
-          <Link href="/shop" className="text-primary underline">
-            Continue shopping
-          </Link>
-          .
-        </p>
-      ) : (
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-4">My Cart</h1>
+      {message && (
+        <div className="mb-4 p-2 bg-green-100 text-green-800 text-center rounded">
+          {message}
+        </div>
+      )}
+      {cart?.items.length ? (
         <div className="space-y-4">
-          {cartItems.map((item) => {
-            const product = products[item.productId];
-            if (!product) return null;
-            const itemPrice = product.discountPrice ?? product.price;
-            return (
-              <div
-                key={item.productId}
-                className="flex items-center p-4 border rounded-md"
-              >
-                <div className="w-24 h-24 relative">
-                  {product.images && product.images.length > 0 && (
-                    <Image
-                      src={`http://localhost:5000${product.images[0]}`}
-                      alt={product.name}
-                      fill
-                      className="object-cover"
-                    />
-                  )}
-                </div>
-                <div className="flex-1 ml-4">
-                  <h2 className="text-xl font-semibold">{product.name}</h2>
-                  <p className="text-lg font-bold">₹{itemPrice.toFixed(2)}</p>
-                  <div className="flex items-center mt-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handleQuantityChange(item.productId, -1)}
-                      disabled={item.quantity <= 1}
-                    >
-                      <Minus size={16} />
-                    </Button>
-                    <span className="mx-2">{item.quantity}</span>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handleQuantityChange(item.productId, 1)}
-                    >
-                      <Plus size={16} />
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex flex-col items-end">
-                  <p className="text-lg font-bold">
-                    ₹{(itemPrice * item.quantity).toFixed(2)}
-                  </p>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeFromCart(item.productId)}
-                  >
-                    <Trash2 size={20} />
-                  </Button>
-                </div>
+          {cart.items.map((item) => (
+            <div
+              key={item.product._id}
+              className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 border p-4 rounded"
+            >
+              <div className="relative h-20 w-20">
+                <Image
+                  src={`http://localhost:5000${item.product.images[0]}`}
+                  alt={item.product.name}
+                  fill
+                  className="object-cover rounded"
+                />
               </div>
-            );
-          })}
-          <Separator />
-          <div className="flex justify-between">
-            <h2 className="text-2xl font-bold">Total:</h2>
-            <h2 className="text-2xl font-bold">
-              ₹
-              {cartItems
-                .reduce((total, item) => {
-                  const product = products[item.productId];
-                  const itemPrice = product ? product.discountPrice ?? product.price : 0;
-                  return total + itemPrice * item.quantity;
-                }, 0)
-                .toFixed(2)}
+              <div className="flex-1">
+                <h2 className="text-lg font-medium">{item.product.name}</h2>
+                <p className="text-sm text-gray-600">
+                  Unit Price: ₹{getUnitPrice(item).toFixed(2)}
+                </p>
+                <p className="text-sm text-gray-600">
+                  Line Total: ₹{(getUnitPrice(item) * item.quantity).toFixed(2)}
+                </p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  size="icon"
+                  variant="outline"
+                  onClick={() =>
+                    updateQuantity(item.product._id, item.quantity - 1)
+                  }
+                  disabled={item.quantity <= 1}
+                >
+                  -
+                </Button>
+                <span>{item.quantity}</span>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  onClick={() =>
+                    updateQuantity(item.product._id, item.quantity + 1)
+                  }
+                >
+                  +
+                </Button>
+              </div>
+            </div>
+          ))}
+          <div className="flex justify-end mt-6 border-t pt-4">
+            <h2 className="text-xl font-semibold">
+              Grand Total: ₹{calculateGrandTotal().toFixed(2)}
             </h2>
           </div>
-          <Button className="w-full mt-4">Proceed to Checkout</Button>
         </div>
+      ) : (
+        <p>Your cart is empty.</p>
       )}
     </div>
   );
-};
-
-export default CartPage;
+}

@@ -5,7 +5,7 @@ const generateToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "7d" })
 }
 
-// Register User
+
 export const registerUser = async (req, res) => {
   const { name, email, mobile, password } = req.body
   try {
@@ -22,8 +22,7 @@ export const registerUser = async (req, res) => {
 // authController.js
 export const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body; // Extract email and password from request body
-
+    const { email, password } = req.body; 
     const user = await User.findOne({ email });
     if (!user || !(await user.comparePassword(password))) {
       return res.status(401).json({ message: "Invalid email or password" });
@@ -73,14 +72,5 @@ export const logoutUser = (req, res) => {
 };
 
 
-// export const getUserProfile = async (req, res) => {
-//   try {
-//     const user = await User.findById(req.user._id).select("-password");
-//     if (!user) return res.status(404).json({ message: "User not found" });
 
-//     res.status(200).json(user);
-//   } catch (error) {
-//     console.error("Error fetching user profile:", error);
-//     res.status(500).json({ message: "Server error" });
-//   }
-// };
+ 

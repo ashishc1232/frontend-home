@@ -1,3 +1,4 @@
+//models/Product.js 
 import mongoose from "mongoose";
 
 const productSchema = new mongoose.Schema({
@@ -21,6 +22,7 @@ const productSchema = new mongoose.Schema({
   sellerName: { type: String },
   contact: { type: String, required: true },
   location: { type: String, required: true },
+  seller: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   images: [{ type: String }], // Image URLs
 }, { timestamps: true });
 
